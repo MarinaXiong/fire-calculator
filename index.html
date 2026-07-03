@@ -139,7 +139,7 @@
             border-radius: 20px;
             padding: 24px;
             text-align: center;
-            display: none; /* 默认隐藏，计算后显示 */
+            display: none;
         }
 
         .result-card.show {
@@ -202,13 +202,12 @@
         <h1>🔥 FIRE</h1>
         <div class="subtitle">反向记账 · 厦门版 · 算算你能自由多久</div>
 
-        <!-- 输入区域 -->
         <div class="input-group">
             <div style="text-align: right; margin-top: -10px; margin-bottom: 16px;">
-    <button type="button" onclick="openPriceModal()" style="background: none; border: none; color: #0071e3; font-size: 14px; cursor: pointer; text-decoration: underline;">
-        🥬 厦门今日物价参考
-    </button>
-</div>
+                <button type="button" onclick="openPriceModal()" style="background: none; border: none; color: #0071e3; font-size: 14px; cursor: pointer; text-decoration: underline;">
+                    🥬 厦门今日物价参考
+                </button>
+            </div>
             <label>💰 当前总储蓄 <span class="hint">（元）</span></label>
             <input type="number" id="savings" placeholder="例如 150000" value="150000" step="1000">
         </div>
@@ -233,7 +232,6 @@
             <input type="number" id="otherExpense" placeholder="例如 3500" value="3500" step="100">
         </div>
 
-        <!-- 社保选项（厦门） -->
         <div class="checkbox-group">
             <div class="checkbox-item">
                 <input type="checkbox" id="isEmployed" checked>
@@ -251,22 +249,23 @@
 
         <button class="btn-calculate" onclick="compute()">计算我的自由天数</button>
 
-        <!-- 结果卡片 -->
-         <!-- 物价弹窗 -->
-<div id="priceModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 20px; padding: 28px; max-width: 420px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2 style="margin: 0; font-size: 22px;">🥬 厦门今日物价参考</h2>
-            <button onclick="closePriceModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+        <!-- 物价弹窗 -->
+        <div id="priceModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 20px; padding: 28px; max-width: 420px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 style="margin: 0; font-size: 22px;">🥬 厦门今日物价参考</h2>
+                    <button onclick="closePriceModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+                </div>
+                <p style="color: #6e6e73; font-size: 13px; margin-bottom: 16px;" id="priceSource"></p>
+                <table style="width: 100%; border-collapse: collapse; font-size: 15px;" id="priceTable">
+                </table>
+                <button onclick="applyMinSurvival()" style="margin-top: 20px; width: 100%; padding: 14px; background: #34c759; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    📉 按最低生存成本估算 (约 <span id="minMonthlyCost">0</span> 元/月)
+                </button>
+            </div>
         </div>
-        <p style="color: #6e6e73; font-size: 13px; margin-bottom: 16px;" id="priceSource"></p>
-        <table style="width: 100%; border-collapse: collapse; font-size: 15px;" id="priceTable">
-        </table>
-        <button onclick="applyMinSurvival()" style="margin-top: 20px; width: 100%; padding: 14px; background: #34c759; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
-            📉 按最低生存成本估算 (约 <span id="minMonthlyCost">0</span> 元/月)
-        </button>
-    </div>
-</div>
+
+        <!-- 结果卡片 -->
         <div id="resultCard" class="result-card">
             <div>你可以自由生活</div>
             <div class="freedom-days">
@@ -285,86 +284,71 @@
     </div>
 
     <script>
-        function compute() {
-            // 存储物价数据
-let priceData = null;
+        // ========== 全局变量与函数 ==========
 
-// 打开物价弹窗
-async function openPriceModal() {
-    if (!priceData) {
-        try {
-            const res = await fetch('prices.json');
-            if (!res.ok) throw new Error('无法加载物价数据');
-            priceData = await res.json();
-        } catch (err) {
-            alert('物价数据加载失败，请检查 prices.json 文件是否存在。');
-            return;
-        }
-    }
+        // 物价数据直接内嵌，避免 file:// 协议下 fetch 失败
+        const priceData = {"updateDate":"2026-07-03","source":"厦门市发改委价格监测（示例数据，请以实际为准）","items":[{"name":"大米","unit":"500g","price":2.8},{"name":"鸡蛋","unit":"个","price":0.8},{"name":"猪瘦肉","unit":"500g","price":16.5},{"name":"牛肉","unit":"500g","price":45},{"name":"大白菜","unit":"500g","price":2.2},{"name":"牛奶（纯牛奶）","unit":"250ml","price":2.5},{"name":"食用油（花生油）","unit":"1L","price":26},{"name":"盐","unit":"500g","price":3},{"name":"酱油","unit":"500ml","price":8}],"dailyMinimum":{"大米":300,"鸡蛋":1,"猪瘦肉":50,"大白菜":200,"牛奶（纯牛奶）":250,"食用油（花生油）":20,"盐":5,"酱油":10}};
 
-    // 填充数据来源
-    document.getElementById('priceSource').textContent = 
-        `数据更新：${priceData.updateDate} | ${priceData.source}`;
+        function openPriceModal() {
 
-    // 生成物价表格
-    let tableHTML = `
-        <tr style="border-bottom: 1px solid #e5e5ea;">
-            <th style="text-align: left; padding: 8px 4px;">食品</th>
-            <th style="text-align: right; padding: 8px 4px;">单价</th>
-        </tr>`;
-    
-    priceData.items.forEach(item => {
-        tableHTML += `
-        <tr style="border-bottom: 1px solid #f0f0f5;">
-            <td style="padding: 8px 4px;">${item.name}</td>
-            <td style="text-align: right; padding: 8px 4px;">${item.price}元/${item.unit}</td>
-        </tr>`;
-    });
-    document.getElementById('priceTable').innerHTML = tableHTML;
+            document.getElementById('priceSource').textContent =
+                `数据更新：${priceData.updateDate} | ${priceData.source}`;
 
-    // 计算最低月伙食费
-    let totalDaily = 0;
-    for (let [foodName, amount] of Object.entries(priceData.dailyMinimum)) {
-        const item = priceData.items.find(i => i.name === foodName);
-        if (item) {
-            // 将每日需求量转换为与单价匹配的数量
-            let unitConvert = 1;
-            if (item.unit.includes('500g') || item.unit.includes('500ml')) {
-                unitConvert = 500;
-            } else if (item.unit.includes('250ml')) {
-                unitConvert = 250;
-            } else if (item.unit === '个') {
-                unitConvert = 1;
-            } else if (item.unit.includes('1L')) {
-                unitConvert = 1000;
+            let tableHTML = `
+                <tr style="border-bottom: 1px solid #e5e5ea;">
+                    <th style="text-align: left; padding: 8px 4px;">食品</th>
+                    <th style="text-align: right; padding: 8px 4px;">单价</th>
+                </tr>`;
+
+            priceData.items.forEach(item => {
+                tableHTML += `
+                <tr style="border-bottom: 1px solid #f0f0f5;">
+                    <td style="padding: 8px 4px;">${item.name}</td>
+                    <td style="text-align: right; padding: 8px 4px;">${item.price}元/${item.unit}</td>
+                </tr>`;
+            });
+            document.getElementById('priceTable').innerHTML = tableHTML;
+
+            let totalDaily = 0;
+            for (let [foodName, amount] of Object.entries(priceData.dailyMinimum)) {
+                const item = priceData.items.find(i => i.name === foodName);
+                if (item) {
+                    let unitConvert = 1;
+                    if (item.unit.includes('500g') || item.unit.includes('500ml')) {
+                        unitConvert = 500;
+                    } else if (item.unit.includes('250ml')) {
+                        unitConvert = 250;
+                    } else if (item.unit === '个') {
+                        unitConvert = 1;
+                    } else if (item.unit.includes('1L')) {
+                        unitConvert = 1000;
+                    }
+                    const dailyCost = (amount / unitConvert) * item.price;
+                    totalDaily += dailyCost;
+                }
             }
-            const dailyCost = (amount / unitConvert) * item.price;
-            totalDaily += dailyCost;
+            const monthlyCost = Math.round(totalDaily * 30);
+            document.getElementById('minMonthlyCost').textContent = monthlyCost;
+
+            document.getElementById('priceModal').style.display = 'flex';
         }
-    }
-    const monthlyCost = Math.round(totalDaily * 30);
-    document.getElementById('minMonthlyCost').textContent = monthlyCost;
 
-    // 显示弹窗
-    document.getElementById('priceModal').style.display = 'flex';
-}
+        function closePriceModal() {
+            document.getElementById('priceModal').style.display = 'none';
+        }
 
-// 关闭弹窗
-function closePriceModal() {
-    document.getElementById('priceModal').style.display = 'none';
-}
+        function applyMinSurvival() {
+            const monthlyCost = parseInt(document.getElementById('minMonthlyCost').textContent, 10);
+            if (monthlyCost > 0) {
+                document.getElementById('basicExpense').value = monthlyCost;
+            }
+            closePriceModal();
+            compute();
+        }
 
-// 将最低月伙食费填入输入框
-function applyMinSurvival() {
-    const monthlyCost = parseInt(document.getElementById('minMonthlyCost').textContent, 10);
-    if (monthlyCost > 0) {
-        document.getElementById('basicExpense').value = monthlyCost;
-    }
-    closePriceModal();
-    // 自动触发计算
-    compute();
-}
-            // 读取表单数据
+        // ========== 主计算函数 ==========
+
+        function compute() {
             const input = {
                 currentSavings: parseFloat(document.getElementById('savings').value) || 0,
                 monthlySalary: parseFloat(document.getElementById('salary').value) || 0,
@@ -376,17 +360,13 @@ function applyMinSurvival() {
                 monthlyOtherExpense: parseFloat(document.getElementById('otherExpense').value) || 0
             };
 
-            // 调用核心计算函数
             const result = calculateFIRE(input);
 
-            // 显示结果卡片
             const card = document.getElementById('resultCard');
             card.classList.add('show');
 
-            // 自由天数
             document.getElementById('freedomDaysDisplay').textContent = result.freedomDays;
 
-            // 耗尽日期
             const depletionDiv = document.getElementById('depletionDateDisplay');
             if (result.depletionDate) {
                 depletionDiv.textContent = '预计储蓄耗尽日期：' + result.depletionDate;
@@ -396,7 +376,6 @@ function applyMinSurvival() {
                 depletionDiv.textContent = '';
             }
 
-            // 收支明细
             const b = result.breakdown;
             const breakdownHTML = `
                 <div class="breakdown-item">
@@ -435,7 +414,6 @@ function applyMinSurvival() {
             document.getElementById('breakdownContainer').innerHTML = breakdownHTML;
         }
 
-        // 页面加载时预计算一次
         window.addEventListener('DOMContentLoaded', compute);
     </script>
 </body>
