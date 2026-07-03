@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIRE 自由计算器 · 厦门版</title>
+    <script src="fireCalc.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 32px 24px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .subtitle {
+            color: #6e6e73;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1d1d1f;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #86868b;
+            margin-left: 4px;
+            font-weight: 400;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 14px;
+            font-size: 16px;
+            background: #fbfbfd;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #0071e3;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+        }
+
+        .checkbox-group {
+            background: #f9f9fb;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #0071e3;
+            margin-right: 12px;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 16px;
+            background: #0071e3;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-calculate:hover {
+            background: #0077ed;
+            transform: translateY(-1px);
+        }
+
+        .btn-calculate:active {
+            background: #006edb;
+            transform: translateY(0);
+        }
+
+        .result-card {
+            margin-top: 28px;
+            background: linear-gradient(135deg, #1d1d1f 0%, #2d2d2f 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            display: none; /* 默认隐藏，计算后显示 */
+        }
+
+        .result-card.show {
+            display: block;
+        }
+
+        .freedom-days {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 8px 0;
+            line-height: 1.1;
+        }
+
+        .unit {
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .depletion-date {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
+
+        .breakdown {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .breakdown-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .breakdown-label {
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .breakdown-value {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #86868b;
+            margin-top: 16px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 FIRE</h1>
+        <div class="subtitle">反向记账 · 厦门版 · 算算你能自由多久</div>
+
+        <!-- 输入区域 -->
+        <div class="input-group">
+            <label>💰 当前总储蓄 <span class="hint">（元）</span></label>
+            <input type="number" id="savings" placeholder="例如 150000" value="150000" step="1000">
+        </div>
+
+        <div class="input-group">
+            <label>💼 税后月薪 <span class="hint">（若已辞职填0）</span></label>
+            <input type="number" id="salary" placeholder="例如 12000" value="12000" step="100">
+        </div>
+
+        <div class="input-group">
+            <label>📈 每月被动收入 <span class="hint">（理财、房租等）</span></label>
+            <input type="number" id="passiveIncome" placeholder="例如 2000" value="2000" step="100">
+        </div>
+
+        <div class="input-group">
+            <label>🍚 月基础生存支出 <span class="hint">（吃饭、交通、日用品）</span></label>
+            <input type="number" id="basicExpense" placeholder="例如 2500" value="2500" step="100">
+        </div>
+
+        <div class="input-group">
+            <label>🎯 月其他固定支出 <span class="hint">（房租/房贷、保险、订阅等）</span></label>
+            <input type="number" id="otherExpense" placeholder="例如 3500" value="3500" step="100">
+        </div>
+
+        <!-- 社保选项（厦门特供） -->
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" id="isEmployed" checked>
+                <label for="isEmployed">目前仍在职（有月薪收入）</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="receivingUnemployment">
+                <label for="receivingUnemployment">正在领取失业金 <span style="color:#86868b; font-size:12px;">（厦门约1827元/月）</span></label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="payingFlexibleSocial">
+                <label for="payingFlexibleSocial">以灵活就业续交社保 <span style="color:#86868b; font-size:12px;">（约1264元/月）</span></label>
+            </div>
+        </div>
+
+        <button class="btn-calculate" onclick="compute()">计算我的自由天数</button>
+
+        <!-- 结果卡片 -->
+        <div id="resultCard" class="result-card">
+            <div>你可以自由生活</div>
+            <div class="freedom-days">
+                <span id="freedomDaysDisplay">0</span>
+                <span class="unit">天</span>
+            </div>
+            <div class="depletion-date" id="depletionDateDisplay"></div>
+            <div class="breakdown" id="breakdownContainer"></div>
+        </div>
+
+        <div class="note">
+            * 计算基于2025年厦门灵活就业社保最低标准<br>
+            * 社保基数：养老保险4212元(20%)，医保4212元(10%)<br>
+            * 失业金按最低工资2030元的90%计算
+        </div>
+    </div>
+
+    <script>
+        function compute() {
+            // 读取表单数据
+            const input = {
+                currentSavings: parseFloat(document.getElementById('savings').value) || 0,
+                monthlySalary: parseFloat(document.getElementById('salary').value) || 0,
+                monthlyPassiveIncome: parseFloat(document.getElementById('passiveIncome').value) || 0,
+                isEmployed: document.getElementById('isEmployed').checked,
+                receivingUnemployment: document.getElementById('receivingUnemployment').checked,
+                payingFlexibleSocial: document.getElementById('payingFlexibleSocial').checked,
+                monthlyBasicExpense: parseFloat(document.getElementById('basicExpense').value) || 0,
+                monthlyOtherExpense: parseFloat(document.getElementById('otherExpense').value) || 0
+            };
+
+            // 调用核心计算函数
+            const result = calculateFIRE(input);
+
+            // 显示结果卡片
+            const card = document.getElementById('resultCard');
+            card.classList.add('show');
+
+            // 自由天数
+            document.getElementById('freedomDaysDisplay').textContent = result.freedomDays;
+
+            // 耗尽日期
+            const depletionDiv = document.getElementById('depletionDateDisplay');
+            if (result.depletionDate) {
+                depletionDiv.textContent = '预计储蓄耗尽日期：' + result.depletionDate;
+            } else if (result.monthlyNetFlow >= 0) {
+                depletionDiv.textContent = '✨ 月净流入 ≥ 0，理论上可持续自由下去';
+            } else {
+                depletionDiv.textContent = '';
+            }
+
+            // 收支明细
+            const b = result.breakdown;
+            const breakdownHTML = `
+                <div class="breakdown-item">
+                    <div class="breakdown-label">月总收入</div>
+                    <div class="breakdown-value">¥${b.totalIncome.toLocaleString()}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">月总支出</div>
+                    <div class="breakdown-value">¥${b.totalExpense.toLocaleString()}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">薪资金</div>
+                    <div class="breakdown-value">¥${b.salary.toLocaleString()}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">被动收入</div>
+                    <div class="breakdown-value">¥${b.passiveIncome.toLocaleString()}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">失业金</div>
+                    <div class="breakdown-value">¥${b.unemployment.toLocaleString()}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">基础生存支出</div>
+                    <div class="breakdown-value">¥${b.basicExpense.toLocaleString()}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">其他支出</div>
+                    <div class="breakdown-value">¥${b.otherExpense.toLocaleString()}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-label">社保续缴</div>
+                    <div class="breakdown-value">¥${b.socialSecurity.toLocaleString()}</div>
+                </div>
+            `;
+            document.getElementById('breakdownContainer').innerHTML = breakdownHTML;
+        }
+
+        // 页面加载时预计算一次
+        window.addEventListener('DOMContentLoaded', compute);
+    </script>
+</body>
+</html>
